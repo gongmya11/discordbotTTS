@@ -5,6 +5,7 @@ import {
   createAudioResource,
   AudioPlayerStatus,
   VoiceConnectionStatus,
+  NoSubscriberBehavior,
   entersState
 } from '@discordjs/voice';
 import fs from 'fs';
@@ -19,7 +20,12 @@ export const client = new Client({
 });
 
 let connection = null;
-const audioPlayer = createAudioPlayer();
+const audioPlayer = createAudioPlayer({
+  behaviors: {
+    noSubscriber: NoSubscriberBehavior.Play,
+    maxMissedFrames: 250
+  }
+});
 const audioQueue = [];
 let isPlaying = false;
 let currentChannelInfo = null;
@@ -61,9 +67,11 @@ function processQueue() {
     return;
   }
 
-
   try {
-    const resource = createAudioResource(nextAudioPath);
+    const resource = createAudioResource(nextAudioPath, {
+      inlineVolume: false,
+      silencePaddingFrames: 0
+    });
     audioPlayer.play(resource);
     isPlaying = true;
     console.log(`[AudioPlayer]: Đang phát file âm thanh: ${nextAudioPath}`);

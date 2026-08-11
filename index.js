@@ -60,6 +60,23 @@ function savePresets(presets) {
 
 let presets = loadPresets();
 
+// Pre-load all preset callouts in background for 0ms instant playback
+async function warmUpPresets() {
+  console.log('[Cache Warm-up]: Đang nạp sẵn cache âm thanh cho Quick Callouts...');
+  for (const item of presets) {
+    if (!item.text) continue;
+    try {
+      const rawAudioPath = await generateTTSAudio(item.text, VOICES.NAM_MINH);
+      await convertToDomixiVoice(rawAudioPath);
+    } catch (e) {
+      // Silent catch during background pre-warm
+    }
+  }
+  console.log('[Cache Warm-up]: Đã khởi tạo hoàn tất cache Quick Callouts (phát tức thì 0ms)!');
+}
+
+warmUpPresets();
+
 // Static file server
 app.use(express.static(path.resolve('public')));
 app.use(express.json());
