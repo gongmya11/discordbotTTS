@@ -1,0 +1,10 @@
+# Environment & Secret files
+.env
+
+# Dependencies
+node_modules/
+
+# Temporary audio files & logs
+audio_cache/
+*.log
+.DS_Store

@@ -1,0 +1,86 @@
+[
+  {
+    "id": "callout-1",
+    "label": "Lên top",
+    "text": "Anh em lên top hỗ trợ tôi với!",
+    "icon": "⬆️",
+    "color": "#ef4444"
+  },
+  {
+    "id": "callout-2",
+    "label": "Top mất tích",
+    "text": "Kẻ địch lane top mất tích rồi nha!",
+    "icon": "👁️",
+    "color": "#f97316"
+  },
+  {
+    "id": "callout-3",
+    "label": "Ra mid",
+    "text": "Ra mid combat anh em ơi!",
+    "icon": "🎯",
+    "color": "#eab308"
+  },
+  {
+    "id": "callout-4",
+    "label": "Mid mất tích",
+    "text": "Mid bên nó mất tích rồi, cẩn thận gank!",
+    "icon": "👁️",
+    "color": "#f97316"
+  },
+  {
+    "id": "callout-5",
+    "label": "Xuống bot",
+    "text": "Xuống bot đẩy đường anh em!",
+    "icon": "⬇️",
+    "color": "#3b82f6"
+  },
+  {
+    "id": "callout-6",
+    "label": "Bot mất tích",
+    "text": "Bot mất tích rồi, lùi về lùi về!",
+    "icon": "👁️",
+    "color": "#f97316"
+  },
+  {
+    "id": "callout-7",
+    "label": "Đánh chậm lại",
+    "text": "Đánh chậm thôi, giữ vị trí!",
+    "icon": "🐢",
+    "color": "#8b5cf6"
+  },
+  {
+    "id": "callout-8",
+    "label": "Đẩy trụ",
+    "text": "Tập trung đẩy trụ luôn anh em!",
+    "icon": "🏛️",
+    "color": "#10b981"
+  },
+  {
+    "id": "callout-9",
+    "label": "Roshan",
+    "text": "Vào ăn Roshan lẹ nào!",
+    "icon": "👑",
+    "color": "#ec4899"
+  },
+  {
+    "id": "callout-10",
+    "label": "Cắm mắt",
+    "text": "Cắm mắt khu vực này giùm tôi với!",
+    "icon": "👁️‍🗨️",
+    "color": "#06b6d4"
+  },
+  {
+    "id": "callout-11",
+    "label": "DOTA thôi!",
+    "text": "Dota thôi anh em ơi, vào ván mới nào!",
+    "icon": "🎮",
+    "color": "#f43f5e"
+  },
+  {
+    "id": "callout-12",
+    "label": "Rút lui",
+    "text": "Rút lui rút lui, không giao tranh nữa!",
+    "icon": "🏃",
+    "color": "#64748b"
+  }
+]
