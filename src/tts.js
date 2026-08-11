@@ -10,8 +10,9 @@ if (!fs.existsSync(cacheDir)) {
 }
 
 export const VOICES = {
-  DEFAULT: '21m00Tcm4TlvDq8ikWAM' // Giọng mẫu ElevenLabs mặc định
+  DEFAULT: 'JBFqnCBsd6RMkjVDRZzb' // Giọng ElevenLabs Premade miễn phí (George)
 };
+
 
 /**
  * Tạo file âm thanh MP3 từ câu nói Tiếng Việt sử dụng ElevenLabs AI (kèm fallback Google TTS)
