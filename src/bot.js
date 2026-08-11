@@ -90,7 +90,11 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
       return currentChannelInfo;
     }
 
-    // Dọn dẹp kết nối cũ trước khi tạo kết nối mới để tránh race condition
+    // Dọn dẹp hàng đợi cũ và ngắt kết nối cũ trước khi tạo kết nối mới
+    audioQueue.length = 0;
+    isPlaying = false;
+    audioPlayer.stop();
+
     if (connection) {
       try {
         connection.removeAllListeners();
@@ -98,6 +102,7 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
       } catch (e) {}
       connection = null;
     }
+
 
     const newConnection = joinVoiceChannel({
       channelId: channelId,
@@ -175,9 +180,14 @@ export function disconnectVoice() {
  * Thêm file âm thanh vào hàng đợi
  */
 export function queueAudio(filePath) {
+  if (!connection || connection.state.status !== VoiceConnectionStatus.Ready) {
+    console.warn('[AudioPlayer Warning]: Bỏ qua phát câu thoại vì Bot chưa ở trong Kênh Voice nào.');
+    return;
+  }
   audioQueue.push(filePath);
   processQueue();
 }
+
 
 /**
  * Kiểm tra xem phòng có còn người không, nếu trống thì hẹn 15s tự out
