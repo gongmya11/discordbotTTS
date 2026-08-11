@@ -1,4 +1,5 @@
-# 🎙️ Discord TTS Soundboard Bot & Mobile Remote Controller
+# 🎙️ Discord TTS Soundboard Bot & Mobile Remote Controller (v1.0.1)
+
 
 Ứng dụng Discord Voice Bot thay thế Soundboard hỗ trợ giao tiếp bằng giọng nói Tiếng Việt (Edge TTS) với giao diện điều khiển dành riêng cho Điện thoại (Web Remote Mobile App).
 
