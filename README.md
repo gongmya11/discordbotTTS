@@ -6,7 +6,9 @@
 
 ## 🌟 Tính năng chính
 
-- 📱 **Giao diện Quick Callouts trên Điện thoại**: Giao diện tối ưu chuẩn màn hình cảm ứng điện thoại (Dark Mode / Glassmorphism) với 2 cột nút bấm phát nhanh như trong Dota 2.
+- 🤖 **Lệnh gọi vào Voice tự động**: Gõ `/gummyajoin` trong Discord để Bot tự động vào Kênh thoại bạn đang ngồi.
+- ⏱️ **Tự động Rời phòng**: Tự động thoát Kênh thoại sau 10 giây khi phòng không còn ai.
+
 - ⚙️ **Tự do Quản lý Nút bấm (Dynamic Grid Builder)**: Thêm, sửa tên nút, chỉnh câu đọc TTS, chọn Icon (Emoji) và màu sắc cho từng nút trực tiếp trên điện thoại.
 - 🗣️ **Giọng đọc Tiếng Việt tự nhiên (Microsoft Edge TTS)**: Sử dụng miễn phí 100% không cần API key với giọng đọc Nam (`vi-VN-NamMinhNeural`) và Nữ (`vi-VN-HoaiMyNeural`).
 - ✍️ **Gõ văn bản tự do (Custom Speech Input)**: Nhập câu thoại bất kỳ trên điện thoại -> Ấn gửi để Bot cất giọng đọc tức thì vào kênh đàm thoại Discord.
