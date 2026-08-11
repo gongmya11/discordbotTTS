@@ -73,7 +73,6 @@ function processQueue() {
  */
 export async function connectToVoice(guildId, channelId, adapterCreator) {
   try {
-    // Hủy timer tự out cũ nếu có
     if (autoLeaveTimer) {
       clearTimeout(autoLeaveTimer);
       autoLeaveTimer = null;
@@ -89,7 +88,6 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
 
     connection.subscribe(audioPlayer);
 
-    // Tự động kết nối lại nếu gián đoạn
     connection.on(VoiceConnectionStatus.Disconnected, async () => {
       try {
         await Promise.race([
@@ -194,38 +192,65 @@ client.on('voiceStateUpdate', (oldState, newState) => {
   }
 });
 
-// Đăng ký lệnh Slash Command /gummyajoin khi bot Ready
-client.once('ready', async () => {
-  console.log(`[Discord Bot]: Đã đăng nhập tài khoản: ${client.user.tag}`);
+// Hàm đăng ký Slash Command tức thì cho từng Guild & Global
+async function registerCommands() {
+  const commands = [
+    new SlashCommandBuilder()
+      .setName('gummyajoin')
+      .setDescription('Mời bot TTS vào kênh voice bạn đang ở'),
+    new SlashCommandBuilder()
+      .setName('join')
+      .setDescription('Mời bot TTS vào kênh voice bạn đang ở')
+  ];
 
   try {
-    const commands = [
-      new SlashCommandBuilder()
-        .setName('gummyajoin')
-        .setDescription('Mời bot TTS vào kênh voice bạn đang ở')
-    ];
-
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+    
+    // Đăng ký Global
     await rest.put(
       Routes.applicationCommands(client.user.id),
       { body: commands }
     );
-    console.log('[Discord Bot]: Đã đăng ký lệnh Slash /gummyajoin thành công!');
+    console.log('[Slash Commands]: Đã đăng ký lệnh Global (/gummyajoin & /join)');
+
+    // Đăng ký tức thì cho từng Guild đang kết nối
+    client.guilds.cache.forEach(async (guild) => {
+      try {
+        await rest.put(
+          Routes.applicationGuildCommands(client.user.id, guild.id),
+          { body: commands }
+        );
+        console.log(`[Slash Commands]: Đã đăng ký lệnh tức thì cho Guild "${guild.name}"`);
+      } catch (gErr) {
+        console.warn(`[Slash Commands Warning]: Không thể đăng ký cho Guild ${guild.name}:`, gErr.message);
+      }
+    });
   } catch (err) {
     console.warn('[Slash Command Error]: Không thể đăng ký lệnh slash:', err.message);
   }
+}
+
+// Đăng ký lệnh Slash Command khi bot Ready
+client.once('ready', async () => {
+  console.log(`[Discord Bot]: Đã đăng nhập tài khoản: ${client.user.tag}`);
+  await registerCommands();
 });
 
-// Xử lý khi người dùng gõ lệnh Slash /gummyajoin
+client.on('guildCreate', async (guild) => {
+  console.log(`[Discord Bot]: Đã tham gia Guild mới: ${guild.name}`);
+  await registerCommands();
+});
+
+// Xử lý khi người dùng gõ lệnh Slash /gummyajoin hoặc /join
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  if (interaction.commandName === 'gummyajoin') {
+  if (interaction.commandName === 'gummyajoin' || interaction.commandName === 'join') {
     const voiceChannel = interaction.member?.voice?.channel;
 
     if (!voiceChannel) {
       return interaction.reply({
-        content: '⚠️ Bạn phải ở trong một Kênh Voice trước khi dùng lệnh `/gummyajoin`!',
+        content: '⚠️ Bạn phải ở trong một Kênh Voice trước khi dùng lệnh này!',
         ephemeral: true
       });
     }
@@ -240,16 +265,24 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-// Xử lý khi người dùng gõ tin nhắn text /gummyajoin hoặc !gummyajoin
+// Xử lý khi người dùng gõ tin nhắn text !gummyajoin, /gummyajoin, !join, /join
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
   const content = message.content.trim().toLowerCase();
-  if (content === '/gummyajoin' || content === '!gummyajoin') {
+  const isMentioned = client.user && message.mentions.has(client.user);
+  
+  if (
+    content === '/gummyajoin' || 
+    content === '!gummyajoin' || 
+    content === '!join' || 
+    content === '/join' ||
+    (isMentioned && (content.includes('join') || content.includes('vào')))
+  ) {
     const voiceChannel = message.member?.voice?.channel;
 
     if (!voiceChannel) {
-      return message.reply('⚠️ Bạn phải ở trong một Kênh Voice trước khi dùng lệnh `/gummyajoin`!');
+      return message.reply('⚠️ Bạn phải ở trong một Kênh Voice trước khi dùng lệnh này!');
     }
 
     try {
