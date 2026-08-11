@@ -51,11 +51,16 @@ audioPlayer.on('error', (error) => {
 function processQueue() {
   if (isPlaying || audioQueue.length === 0) return;
 
+  if (!connection || connection.state.status !== VoiceConnectionStatus.Ready) {
+    console.warn('[AudioPlayer Warning]: Bot chưa ở trong Kênh Voice nào! Hãy gõ /gummyajoin trong Discord hoặc chọn Kênh Voice trên điện thoại.');
+  }
+
   const nextAudioPath = audioQueue.shift();
   if (!fs.existsSync(nextAudioPath)) {
     processQueue();
     return;
   }
+
 
   try {
     const resource = createAudioResource(nextAudioPath);
