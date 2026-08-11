@@ -61,6 +61,7 @@ function processQueue() {
     const resource = createAudioResource(nextAudioPath);
     audioPlayer.play(resource);
     isPlaying = true;
+    console.log(`[AudioPlayer]: Đang phát file âm thanh: ${nextAudioPath}`);
   } catch (err) {
     console.error('[AudioResource Error]:', err);
     isPlaying = false;
@@ -78,6 +79,12 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
       autoLeaveTimer = null;
     }
 
+    // Nếu đã ở đúng kênh voice này rồi thì giữ nguyên
+    if (connection && currentChannelInfo?.channelId === channelId && connection.state.status === VoiceConnectionStatus.Ready) {
+      console.log('[Bot Voice]: Bot đã ở trong kênh voice này rồi.');
+      return currentChannelInfo;
+    }
+
     connection = joinVoiceChannel({
       channelId: channelId,
       guildId: guildId,
@@ -88,6 +95,7 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
 
     connection.subscribe(audioPlayer);
 
+    // Xử lý gián đoạn kết nối voice an toàn không tự kích ngắt nhầm
     connection.on(VoiceConnectionStatus.Disconnected, async () => {
       try {
         await Promise.race([
@@ -95,8 +103,10 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
           entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
         ]);
       } catch (error) {
-        console.warn('[Bot Voice Warning]: Mất kết nối voice, đang dọn dẹp...');
-        disconnectVoice();
+        if (connection && connection.state.status !== VoiceConnectionStatus.Ready && connection.state.status !== VoiceConnectionStatus.Destroyed) {
+          console.warn('[Bot Voice Warning]: Không thể duy trì kết nối voice, ngắt kết nối dọn dẹp...');
+          disconnectVoice();
+        }
       }
     });
 
@@ -111,13 +121,12 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
       channelName: channel ? channel.name : 'Voice Channel'
     };
 
-    console.log(`[Bot Voice]: Đã kết nối vào Voice "${currentChannelInfo.channelName}" (${currentChannelInfo.guildName})`);
+    console.log(`[Bot Voice]: Đã kết nối thành công vào Voice "${currentChannelInfo.channelName}" (${currentChannelInfo.guildName})`);
     notifyStateChange();
-    checkAutoLeave(channel);
     return currentChannelInfo;
   } catch (error) {
     console.error('[Bot Voice Error]: Không thể vào Voice Channel:', error.message);
-    if (connection) {
+    if (connection && connection.state.status !== VoiceConnectionStatus.Destroyed) {
       connection.destroy();
       connection = null;
     }
@@ -136,7 +145,9 @@ export function disconnectVoice() {
     autoLeaveTimer = null;
   }
   if (connection) {
-    connection.destroy();
+    try {
+      connection.destroy();
+    } catch (e) {}
     connection = null;
     currentChannelInfo = null;
     audioQueue.length = 0;
@@ -155,24 +166,24 @@ export function queueAudio(filePath) {
 }
 
 /**
- * Kiểm tra xem phòng có còn người không, nếu trống thì hẹn 10s tự out
+ * Kiểm tra xem phòng có còn người không, nếu trống thì hẹn 15s tự out
  */
 function checkAutoLeave(voiceChannel) {
   if (!voiceChannel || !currentChannelInfo) return;
 
-  const humanMembers = voiceChannel.members.filter(m => !m.user.bot);
+  const humanMembers = voiceChannel.members.filter(m => m.id !== client.user?.id && !m.user.bot);
   
   if (humanMembers.size === 0) {
     if (!autoLeaveTimer) {
-      console.log('[Auto-Leave]: Phòng không còn ai, bot sẽ tự out sau 10 giây...');
+      console.log('[Auto-Leave]: Kênh thoại không còn người dùng, bot sẽ rời sau 15 giây...');
       autoLeaveTimer = setTimeout(() => {
-        console.log('[Auto-Leave]: 10 giây đã trôi qua, bot tự rời kênh voice!');
+        console.log('[Auto-Leave]: 15 giây đã trôi qua, bot tự ngắt kết nối voice!');
         disconnectVoice();
-      }, 10_000);
+      }, 15_000);
     }
   } else {
     if (autoLeaveTimer) {
-      console.log('[Auto-Leave]: Đã có người vào phòng, hủy đếm ngược tự out.');
+      console.log('[Auto-Leave]: Đã có người dùng trong phòng, hủy đếm ngược tự out.');
       clearTimeout(autoLeaveTimer);
       autoLeaveTimer = null;
     }
