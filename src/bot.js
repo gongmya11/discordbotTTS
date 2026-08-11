@@ -79,13 +79,22 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
       autoLeaveTimer = null;
     }
 
-    // Nếu đã ở đúng kênh voice này rồi thì giữ nguyên
+    // Nếu đã ở đúng kênh voice này và trạng thái Ready thì không kết nối lại
     if (connection && currentChannelInfo?.channelId === channelId && connection.state.status === VoiceConnectionStatus.Ready) {
-      console.log('[Bot Voice]: Bot đã ở trong kênh voice này rồi.');
+      console.log('[Bot Voice]: Bot đã ở sẵn trong kênh voice này.');
       return currentChannelInfo;
     }
 
-    connection = joinVoiceChannel({
+    // Dọn dẹp kết nối cũ trước khi tạo kết nối mới để tránh race condition
+    if (connection) {
+      try {
+        connection.removeAllListeners();
+        connection.destroy();
+      } catch (e) {}
+      connection = null;
+    }
+
+    const newConnection = joinVoiceChannel({
       channelId: channelId,
       guildId: guildId,
       adapterCreator: adapterCreator,
@@ -93,24 +102,25 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
       selfMute: false
     });
 
+    connection = newConnection;
     connection.subscribe(audioPlayer);
 
-    // Xử lý gián đoạn kết nối voice an toàn không tự kích ngắt nhầm
-    connection.on(VoiceConnectionStatus.Disconnected, async () => {
+    // Bắt sự kiện ngắt kết nối cho ĐÚNG connection instance này
+    newConnection.on(VoiceConnectionStatus.Disconnected, async () => {
       try {
         await Promise.race([
-          entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
-          entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
+          entersState(newConnection, VoiceConnectionStatus.Signalling, 5_000),
+          entersState(newConnection, VoiceConnectionStatus.Connecting, 5_000),
         ]);
       } catch (error) {
-        if (connection && connection.state.status !== VoiceConnectionStatus.Ready && connection.state.status !== VoiceConnectionStatus.Destroyed) {
-          console.warn('[Bot Voice Warning]: Không thể duy trì kết nối voice, ngắt kết nối dọn dẹp...');
+        if (connection === newConnection && newConnection.state.status !== VoiceConnectionStatus.Ready && newConnection.state.status !== VoiceConnectionStatus.Destroyed) {
+          console.warn('[Bot Voice Warning]: Mất kết nối voice, ngắt kết nối dọn dẹp...');
           disconnectVoice();
         }
       }
     });
 
-    await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
+    await entersState(newConnection, VoiceConnectionStatus.Ready, 15_000);
 
     const guild = client.guilds.cache.get(guildId);
     const channel = guild?.channels.cache.get(channelId);
@@ -126,11 +136,9 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
     return currentChannelInfo;
   } catch (error) {
     console.error('[Bot Voice Error]: Không thể vào Voice Channel:', error.message);
-    if (connection && connection.state.status !== VoiceConnectionStatus.Destroyed) {
-      connection.destroy();
-      connection = null;
+    if (connection === connection && connection?.state?.status !== VoiceConnectionStatus.Ready) {
+      currentChannelInfo = null;
     }
-    currentChannelInfo = null;
     notifyStateChange();
     throw error;
   }
@@ -146,6 +154,7 @@ export function disconnectVoice() {
   }
   if (connection) {
     try {
+      connection.removeAllListeners();
       connection.destroy();
     } catch (e) {}
     connection = null;
