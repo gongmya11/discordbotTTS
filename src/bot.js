@@ -72,8 +72,21 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
 
     connection.subscribe(audioPlayer);
 
-    // Chờ kết nối sẵn sàng trong tối đa 5 giây
-    await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+    // Xử lý tự động kết nối lại nếu bị gián đoạn mạng tạm thời
+    connection.on(VoiceConnectionStatus.Disconnected, async () => {
+      try {
+        await Promise.race([
+          entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
+          entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
+        ]);
+      } catch (error) {
+        console.warn('[Bot Voice Warning]: Mất kết nối voice, đang ngắt kết nối dọn dẹp...');
+        disconnectVoice();
+      }
+    });
+
+    // Chờ kết nối sẵn sàng trong tối đa 15 giây (tối ưu cho Cloud Railway)
+    await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
 
     const guild = client.guilds.cache.get(guildId);
     const channel = guild?.channels.cache.get(channelId);
@@ -84,7 +97,7 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
       channelName: channel ? channel.name : 'Voice Channel'
     };
 
-    console.log(`[Bot Voice]: Đã kết nối vào kênh Voice "${currentChannelInfo.channelName}" (${currentChannelInfo.guildName})`);
+    console.log(`[Bot Voice]: Đã kết nối thành công vào Voice "${currentChannelInfo.channelName}" (${currentChannelInfo.guildName})`);
     return currentChannelInfo;
   } catch (error) {
     console.error('[Bot Voice Error]: Không thể vào Voice Channel:', error.message);
