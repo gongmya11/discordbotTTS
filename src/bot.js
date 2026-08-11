@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js';
 import {
   joinVoiceChannel,
   createAudioPlayer,
@@ -12,7 +12,9 @@ import fs from 'fs';
 export const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildVoiceStates
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
   ]
 });
 
@@ -21,6 +23,18 @@ const audioPlayer = createAudioPlayer();
 const audioQueue = [];
 let isPlaying = false;
 let currentChannelInfo = null;
+let autoLeaveTimer = null;
+let stateChangeCallback = null;
+
+export function onStateChange(cb) {
+  stateChangeCallback = cb;
+}
+
+function notifyStateChange() {
+  if (typeof stateChangeCallback === 'function') {
+    stateChangeCallback(getBotState());
+  }
+}
 
 // Sự kiện quản lý Audio Player Status
 audioPlayer.on(AudioPlayerStatus.Idle, () => {
@@ -34,9 +48,6 @@ audioPlayer.on('error', (error) => {
   processQueue();
 });
 
-/**
- * Xử lý hàng đợi phát âm thanh lần lượt
- */
 function processQueue() {
   if (isPlaying || audioQueue.length === 0) return;
 
@@ -62,6 +73,12 @@ function processQueue() {
  */
 export async function connectToVoice(guildId, channelId, adapterCreator) {
   try {
+    // Hủy timer tự out cũ nếu có
+    if (autoLeaveTimer) {
+      clearTimeout(autoLeaveTimer);
+      autoLeaveTimer = null;
+    }
+
     connection = joinVoiceChannel({
       channelId: channelId,
       guildId: guildId,
@@ -72,7 +89,7 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
 
     connection.subscribe(audioPlayer);
 
-    // Xử lý tự động kết nối lại nếu bị gián đoạn mạng tạm thời
+    // Tự động kết nối lại nếu gián đoạn
     connection.on(VoiceConnectionStatus.Disconnected, async () => {
       try {
         await Promise.race([
@@ -80,12 +97,11 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
           entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
         ]);
       } catch (error) {
-        console.warn('[Bot Voice Warning]: Mất kết nối voice, đang ngắt kết nối dọn dẹp...');
+        console.warn('[Bot Voice Warning]: Mất kết nối voice, đang dọn dẹp...');
         disconnectVoice();
       }
     });
 
-    // Chờ kết nối sẵn sàng trong tối đa 15 giây (tối ưu cho Cloud Railway)
     await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
 
     const guild = client.guilds.cache.get(guildId);
@@ -97,7 +113,9 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
       channelName: channel ? channel.name : 'Voice Channel'
     };
 
-    console.log(`[Bot Voice]: Đã kết nối thành công vào Voice "${currentChannelInfo.channelName}" (${currentChannelInfo.guildName})`);
+    console.log(`[Bot Voice]: Đã kết nối vào Voice "${currentChannelInfo.channelName}" (${currentChannelInfo.guildName})`);
+    notifyStateChange();
+    checkAutoLeave(channel);
     return currentChannelInfo;
   } catch (error) {
     console.error('[Bot Voice Error]: Không thể vào Voice Channel:', error.message);
@@ -106,6 +124,7 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
       connection = null;
     }
     currentChannelInfo = null;
+    notifyStateChange();
     throw error;
   }
 }
@@ -114,6 +133,10 @@ export async function connectToVoice(guildId, channelId, adapterCreator) {
  * Ngắt kết nối khỏi Voice Channel
  */
 export function disconnectVoice() {
+  if (autoLeaveTimer) {
+    clearTimeout(autoLeaveTimer);
+    autoLeaveTimer = null;
+  }
   if (connection) {
     connection.destroy();
     connection = null;
@@ -121,16 +144,122 @@ export function disconnectVoice() {
     audioQueue.length = 0;
     audioPlayer.stop();
     console.log('[Bot Voice]: Đã ngắt kết nối khỏi kênh Voice');
+    notifyStateChange();
   }
 }
 
 /**
- * Thêm file âm thanh vào hàng đợi phát âm thanh
+ * Thêm file âm thanh vào hàng đợi
  */
 export function queueAudio(filePath) {
   audioQueue.push(filePath);
   processQueue();
 }
+
+/**
+ * Kiểm tra xem phòng có còn người không, nếu trống thì hẹn 10s tự out
+ */
+function checkAutoLeave(voiceChannel) {
+  if (!voiceChannel || !currentChannelInfo) return;
+
+  const humanMembers = voiceChannel.members.filter(m => !m.user.bot);
+  
+  if (humanMembers.size === 0) {
+    if (!autoLeaveTimer) {
+      console.log('[Auto-Leave]: Phòng không còn ai, bot sẽ tự out sau 10 giây...');
+      autoLeaveTimer = setTimeout(() => {
+        console.log('[Auto-Leave]: 10 giây đã trôi qua, bot tự rời kênh voice!');
+        disconnectVoice();
+      }, 10_000);
+    }
+  } else {
+    if (autoLeaveTimer) {
+      console.log('[Auto-Leave]: Đã có người vào phòng, hủy đếm ngược tự out.');
+      clearTimeout(autoLeaveTimer);
+      autoLeaveTimer = null;
+    }
+  }
+}
+
+// Xử lý sự kiện voiceStateUpdate để tự out khi room trống
+client.on('voiceStateUpdate', (oldState, newState) => {
+  if (!currentChannelInfo) return;
+
+  const channelId = currentChannelInfo.channelId;
+  if (oldState.channelId === channelId || newState.channelId === channelId) {
+    const channel = client.channels.cache.get(channelId);
+    if (channel && channel.isVoiceBased()) {
+      checkAutoLeave(channel);
+    }
+  }
+});
+
+// Đăng ký lệnh Slash Command /gummyajoin khi bot Ready
+client.once('ready', async () => {
+  console.log(`[Discord Bot]: Đã đăng nhập tài khoản: ${client.user.tag}`);
+
+  try {
+    const commands = [
+      new SlashCommandBuilder()
+        .setName('gummyajoin')
+        .setDescription('Mời bot TTS vào kênh voice bạn đang ở')
+    ];
+
+    const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+    await rest.put(
+      Routes.applicationCommands(client.user.id),
+      { body: commands }
+    );
+    console.log('[Discord Bot]: Đã đăng ký lệnh Slash /gummyajoin thành công!');
+  } catch (err) {
+    console.warn('[Slash Command Error]: Không thể đăng ký lệnh slash:', err.message);
+  }
+});
+
+// Xử lý khi người dùng gõ lệnh Slash /gummyajoin
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  if (interaction.commandName === 'gummyajoin') {
+    const voiceChannel = interaction.member?.voice?.channel;
+
+    if (!voiceChannel) {
+      return interaction.reply({
+        content: '⚠️ Bạn phải ở trong một Kênh Voice trước khi dùng lệnh `/gummyajoin`!',
+        ephemeral: true
+      });
+    }
+
+    try {
+      await interaction.deferReply();
+      await connectToVoice(interaction.guildId, voiceChannel.id, interaction.guild.voiceAdapterCreator);
+      await interaction.editReply(`✅ Bot đã vào kênh voice **${voiceChannel.name}** thành công!`);
+    } catch (err) {
+      await interaction.editReply(`❌ Không thể vào kênh voice: ${err.message}`);
+    }
+  }
+});
+
+// Xử lý khi người dùng gõ tin nhắn text /gummyajoin hoặc !gummyajoin
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+
+  const content = message.content.trim().toLowerCase();
+  if (content === '/gummyajoin' || content === '!gummyajoin') {
+    const voiceChannel = message.member?.voice?.channel;
+
+    if (!voiceChannel) {
+      return message.reply('⚠️ Bạn phải ở trong một Kênh Voice trước khi dùng lệnh `/gummyajoin`!');
+    }
+
+    try {
+      await connectToVoice(message.guildId, voiceChannel.id, message.guild.voiceAdapterCreator);
+      await message.reply(`✅ Bot đã vào kênh voice **${voiceChannel.name}** thành công!`);
+    } catch (err) {
+      await message.reply(`❌ Không thể vào kênh voice: ${err.message}`);
+    }
+  }
+});
 
 /**
  * Lấy thông tin trạng thái hiện tại của Bot

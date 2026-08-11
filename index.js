@@ -10,7 +10,8 @@ import {
   connectToVoice, 
   disconnectVoice, 
   queueAudio, 
-  getBotState 
+  getBotState,
+  onStateChange
 } from './src/bot.js';
 import { generateTTSAudio, VOICES } from './src/tts.js';
 
@@ -24,6 +25,12 @@ const io = new Server(httpServer, {
     methods: ['GET', 'POST']
   }
 });
+
+// Phát tín hiệu đồng bộ real-time lên điện thoại khi Bot tự vào/ra voice
+onStateChange((state) => {
+  io.emit('bot-state', state);
+});
+
 
 const PORT = process.env.PORT || 3000;
 const presetsPath = path.resolve('presets.json');
