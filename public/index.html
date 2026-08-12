@@ -3,62 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Discord Voice Quick Callouts</title>
+  <title>Discord Voice Soundboard Remote</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
   <div class="app-container">
-    <!-- Top Header -->
+    <!-- Top Header Bar -->
     <header class="app-header">
-      <div class="channel-badge" id="channelBadge">
-        <span class="status-dot"></span>
-        <span id="connectedChannelName">Chưa kết nối Voice</span>
+      <div class="brand-info">
+        <div class="bot-avatar-wrapper">
+          <div class="avatar-glow"></div>
+          <img id="botAvatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Bot Avatar" class="bot-avatar">
+        </div>
+        <div class="header-titles">
+          <h1 class="app-title">TTS Soundboard</h1>
+          <div class="channel-badge disconnected" id="channelBadge">
+            <span class="status-dot"></span>
+            <span id="connectedChannelName">Chưa vào Kênh Voice</span>
+          </div>
+        </div>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" id="btnConnectVoice" title="Chọn Kênh Voice">
+        <button class="icon-btn action-voice" id="btnConnectVoice" title="Chọn Kênh Voice Discord">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
         </button>
-        <button class="icon-btn" id="btnManagePresets" title="Quản lý Nút Bấm">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <button class="icon-btn action-manage" id="btnManagePresets" title="Thêm / Quản lý Nút Bấm">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
     </header>
 
-    <!-- Main Content Area -->
+    <!-- Audio Visualizer Status Banner (Hiện khi bot phát âm thanh) -->
+    <div class="audio-banner" id="audioBanner">
+      <div class="wave-visualizer">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <span class="banner-text" id="audioBannerText">Đang phát giọng đọc vào Discord...</span>
+    </div>
+
+    <!-- Category Filter Bar -->
+    <nav class="category-nav">
+      <div class="category-scroll">
+        <button class="cat-pill active" data-cat="all">
+          <span class="cat-icon">✨</span> Tất cả
+        </button>
+        <button class="cat-pill" data-cat="chao-hoi">
+          <span class="cat-icon">👋</span> Chào hỏi
+        </button>
+        <button class="cat-pill" data-cat="giao-tiep">
+          <span class="cat-icon">💬</span> Giao tiếp
+        </button>
+        <button class="cat-pill" data-cat="cam-xuc">
+          <span class="cat-icon">😂</span> Cảm xúc
+        </button>
+        <button class="cat-pill" data-cat="sinh-hoat">
+          <span class="cat-icon">🍚</span> Sinh hoạt
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Callouts Grid -->
     <main class="main-content">
-      <div class="section-header">
-        <h2>QUICK CALLOUTS</h2>
-        <span class="sub-tag" id="presetCount">12 câu phát nhanh</span>
+      <div class="section-title-row">
+        <h2>CÂU PHÁT NHANH</h2>
+        <span class="preset-count-badge" id="presetCount">12 câu thoại</span>
       </div>
 
-      <!-- Quick Callouts Grid -->
       <div class="callouts-grid" id="calloutsGrid">
         <!-- Rendered dynamically by app.js -->
       </div>
+    </main>
 
-      <!-- Custom Speech Input Section -->
-      <div class="custom-tts-card">
-        <div class="card-title">
-          <span>GÕ CÂU TỰ DO (TTS)</span>
-          <div class="voice-selector">
-            <select id="voiceSelect">
-              <option value="vi-VN-NamMinhNeural">Giọng Nam (Nam Minh)</option>
-              <option value="vi-VN-HoaiMyNeural">Giọng Nữ (Hoài Mỹ)</option>
+    <!-- Floating Sticky Bottom Custom TTS Section -->
+    <footer class="custom-tts-sticky">
+      <div class="custom-tts-inner">
+        <div class="tts-voice-row">
+          <span class="tts-label">Gõ thoại tự do</span>
+          <div class="voice-picker-wrapper">
+            <select id="voiceSelect" class="voice-select">
+              <option value="vi-VN-NamMinhNeural">👨 Nam Minh (Miền Bắc)</option>
+              <option value="vi-VN-HoaiMyNeural">👩 Hoài Mỹ (Miền Nam)</option>
             </select>
           </div>
         </div>
-        <div class="input-row">
-          <input type="text" id="customTextInput" placeholder="Nhập câu muốn bot phát giọng..." autocomplete="off">
-          <button id="btnSendCustomText" class="send-btn">
+        <div class="input-send-group">
+          <input type="text" id="customTextInput" placeholder="Nhập câu thoại muốn Bot phát giọng..." autocomplete="off">
+          <button id="btnSendCustomText" class="send-btn" aria-label="Gửi giọng đọc">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
         </div>
       </div>
-    </main>
+    </footer>
   </div>
 
   <!-- Modal: Quản lý / Thêm / Sửa Quick Callouts -->
@@ -71,22 +110,31 @@
       <form id="presetForm">
         <input type="hidden" id="editPresetId">
         <div class="form-group">
-          <label>Nhãn hiển thị trên nút (Label):</label>
-          <input type="text" id="presetLabelInput" placeholder="Ví dụ: Top mất tích" required>
+          <label for="presetLabelInput">Tên hiển thị trên nút (Label):</label>
+          <input type="text" id="presetLabelInput" placeholder="Ví dụ: Chào cả nhà" required>
         </div>
         <div class="form-group">
-          <label>Câu đọc TTS (Nội dung đọc vào Discord):</label>
-          <input type="text" id="presetTextInput" placeholder="Ví dụ: Top mất tích rồi anh em cẩn thận!" required>
+          <label for="presetTextInput">Nội dung câu đọc TTS:</label>
+          <input type="text" id="presetTextInput" placeholder="Ví dụ: Alo chào cả nhà nha!" required>
         </div>
         <div class="form-row">
           <div class="form-group half">
-            <label>Icon (Emoji):</label>
-            <input type="text" id="presetIconInput" placeholder="👁️" value="🎯">
+            <label for="presetCategoryInput">Danh mục:</label>
+            <select id="presetCategoryInput">
+              <option value="chao-hoi">👋 Chào hỏi</option>
+              <option value="giao-tiep">💬 Giao tiếp</option>
+              <option value="cam-xuc">😂 Cảm xúc</option>
+              <option value="sinh-hoat">🍚 Sinh hoạt</option>
+            </select>
           </div>
           <div class="form-group half">
-            <label>Màu sắc (Accent Color):</label>
-            <input type="color" id="presetColorInput" value="#f97316">
+            <label for="presetIconInput">Icon Emoji:</label>
+            <input type="text" id="presetIconInput" placeholder="👋" value="💬">
           </div>
+        </div>
+        <div class="form-group">
+          <label for="presetColorInput">Màu sắc viền thẻ (Accent Color):</label>
+          <input type="color" id="presetColorInput" value="#6366f1">
         </div>
         <div class="modal-actions">
           <button type="button" class="btn-danger" id="btnDeletePreset" style="display: none;">Xóa Nút</button>
@@ -105,13 +153,13 @@
       </div>
       <div class="voice-modal-body">
         <div class="form-group">
-          <label>Chọn Server (Guild):</label>
+          <label for="guildSelect">Chọn Server (Guild):</label>
           <select id="guildSelect">
             <option value="">Đang tải danh sách server...</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Chọn Kênh Voice:</label>
+          <label for="channelSelect">Chọn Kênh Voice:</label>
           <select id="channelSelect">
             <option value="">Vui lòng chọn server trước</option>
           </select>
@@ -123,6 +171,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
 
   <script src="app.js"></script>
 </body>

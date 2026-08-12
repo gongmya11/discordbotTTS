@@ -1,86 +1,98 @@
 [
   {
     "id": "callout-1",
-    "label": "Lên top",
-    "text": "Anh em lên top hỗ trợ tôi với!",
-    "icon": "⬆️",
-    "color": "#ef4444"
+    "label": "Chào cả nhà",
+    "text": "Alo chào cả nhà nha! Chúc mọi người một ngày vui vẻ!",
+    "icon": "👋",
+    "category": "chao-hoi",
+    "color": "#6366f1"
   },
   {
     "id": "callout-2",
-    "label": "Top mất tích",
-    "text": "Kẻ địch lane top mất tích rồi nha!",
-    "icon": "👁️",
-    "color": "#f97316"
+    "label": "Ai đó không?",
+    "text": "Alo 1 2 3 4, phòng này có ai đang online không vậy?",
+    "icon": "🎙️",
+    "category": "chao-hoi",
+    "color": "#3b82f6"
   },
   {
     "id": "callout-3",
-    "label": "Ra mid",
-    "text": "Ra mid combat anh em ơi!",
-    "icon": "🎯",
+    "label": "Đợi 5 phút",
+    "text": "Đợi tui chút xíu nha, 5 phút nữa quay lại liền!",
+    "icon": "⏳",
+    "category": "sinh-hoat",
     "color": "#eab308"
   },
   {
     "id": "callout-4",
-    "label": "Mid mất tích",
-    "text": "Mid bên nó mất tích rồi, cẩn thận gank!",
-    "icon": "👁️",
+    "label": "Đến giờ ăn",
+    "text": "Đến giờ cơm rồi anh em ơi, tạm nghỉ đi ăn thôi!",
+    "icon": "🍚",
+    "category": "sinh-hoat",
     "color": "#f97316"
   },
   {
     "id": "callout-5",
-    "label": "Xuống bot",
-    "text": "Xuống bot đẩy đường anh em!",
-    "icon": "⬇️",
-    "color": "#3b82f6"
-  },
-  {
-    "id": "callout-6",
-    "label": "Bot mất tích",
-    "text": "Bot mất tích rồi, lùi về lùi về!",
-    "icon": "👁️",
-    "color": "#f97316"
-  },
-  {
-    "id": "callout-7",
-    "label": "Đánh chậm lại",
-    "text": "Đánh chậm thôi, giữ vị trí!",
-    "icon": "🐢",
-    "color": "#8b5cf6"
-  },
-  {
-    "id": "callout-8",
-    "label": "Đẩy trụ",
-    "text": "Tập trung đẩy trụ luôn anh em!",
-    "icon": "🏛️",
+    "label": "Chuẩn luôn bro",
+    "text": "Quá chuẩn luôn bro ơi, uy tín 100 phần trăm!",
+    "icon": "👍",
+    "category": "giao-tiep",
     "color": "#10b981"
   },
   {
-    "id": "callout-9",
-    "label": "Roshan",
-    "text": "Vào ăn Roshan lẹ nào!",
-    "icon": "👑",
+    "id": "callout-6",
+    "label": "Thôi dẹp đi",
+    "text": "Thôi thôi dẹp đi, nghe không ổn chút nào hết!",
+    "icon": "🙅‍♂️",
+    "category": "giao-tiep",
+    "color": "#ef4444"
+  },
+  {
+    "id": "callout-7",
+    "label": "Haha vãi",
+    "text": "Haha ha ha, buồn cười quá chịu không nổi luôn!",
+    "icon": "😂",
+    "category": "cam-xuc",
     "color": "#ec4899"
   },
   {
-    "id": "callout-10",
-    "label": "Cắm mắt",
-    "text": "Cắm mắt khu vực này giùm tôi với!",
-    "icon": "👁️‍🗨️",
+    "id": "callout-8",
+    "label": "10 điểm!",
+    "text": "Tuyệt vời quá anh em ơi, 10 điểm không có nhưng!",
+    "icon": "💯",
+    "category": "cam-xuc",
+    "color": "#8b5cf6"
+  },
+  {
+    "id": "callout-9",
+    "label": "Cảm ơn nhiều",
+    "text": "Cảm ơn mọi người nhiều nha, quá là xịn xò!",
+    "icon": "🙏",
+    "category": "chao-hoi",
     "color": "#06b6d4"
   },
   {
-    "id": "callout-11",
-    "label": "DOTA thôi!",
-    "text": "Dota thôi anh em ơi, vào ván mới nào!",
+    "id": "callout-10",
+    "label": "Làm ván nữa",
+    "text": "Anh em ơi làm ván mới không, vào luôn cho nóng!",
     "icon": "🎮",
+    "category": "giao-tiep",
     "color": "#f43f5e"
   },
   {
+    "id": "callout-11",
+    "label": "Vẫn đang nghe",
+    "text": "Tui vẫn đang nghe nè, nói tiếp đi bro!",
+    "icon": "👂",
+    "category": "giao-tiep",
+    "color": "#a855f7"
+  },
+  {
     "id": "callout-12",
-    "label": "Rút lui",
-    "text": "Rút lui rút lui, không giao tranh nữa!",
-    "icon": "🏃",
+    "label": "Chúc ngủ ngon",
+    "text": "Thôi tui đi ngủ đây, chúc cả nhà ngủ ngon nha!",
+    "icon": "🌙",
+    "category": "chao-hoi",
     "color": "#64748b"
   }
 ]
