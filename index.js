@@ -14,7 +14,6 @@ import {
   onStateChange
 } from './src/bot.js';
 import { generateTTSAudio, VOICES } from './src/tts.js';
-import { convertToDomixiVoice } from './src/rvc.js';
 
 dotenv.config();
 
@@ -66,8 +65,7 @@ async function warmUpPresets() {
   for (const item of presets) {
     if (!item.text) continue;
     try {
-      const rawAudioPath = await generateTTSAudio(item.text, VOICES.NAM_MINH);
-      await convertToDomixiVoice(rawAudioPath);
+      await generateTTSAudio(item.text, VOICES.NAM_MINH);
     } catch (e) {
       // Silent catch during background pre-warm
     }
@@ -106,8 +104,7 @@ io.on('connection', (socket) => {
     try {
       console.log(`[QuickCall]: Bấm nút "${item.label}" -> Đang tạo giọng đọc: "${item.text}"`);
       const rawAudioPath = await generateTTSAudio(item.text, VOICES.NAM_MINH);
-      const domixiAudioPath = await convertToDomixiVoice(rawAudioPath);
-      queueAudio(domixiAudioPath);
+      queueAudio(rawAudioPath);
     } catch (err) {
       console.error('[TTS Play Error]:', err.message);
     }
@@ -121,8 +118,7 @@ io.on('connection', (socket) => {
       const selectedVoice = voice || VOICES.NAM_MINH;
       console.log(`[CustomTTS]: Đang đọc câu thoại tự chọn (${selectedVoice}): "${text}"`);
       const rawAudioPath = await generateTTSAudio(text, selectedVoice);
-      const domixiAudioPath = await convertToDomixiVoice(rawAudioPath);
-      queueAudio(domixiAudioPath);
+      queueAudio(rawAudioPath);
     } catch (err) {
       console.error('[CustomTTS Error]:', err.message);
     }
